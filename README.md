@@ -6,13 +6,13 @@ An asynchronous wrapper API for loading and accessing the TurtleCoin daemon and 
 
 To begin using the API, you must create a session
 
-...
+...C#
 TurtleCoin _session = new TurtleCoin();
 ...
 
 From here you can create a daemon connection
 
-...
+...C#
 _session.Daemon.RefreshRate = 30000; // How often the daemon should update its info in milliseconds
 _session.Daemon.Log += DaemonLog; // Assign event handlers you want to use
 _session.Daemon.Error += DaemonError;
@@ -23,7 +23,7 @@ await _session.Daemon.BeginUpdateAsync(); // Begin the internal update loop
 
 After a connection is established and the update loop is begun, you can do your processing and requests
 
-...
+...C#
 public void OnDaemonReady(object sender, EventArgs e) // Triggers when daemon is ready to accept requests
 {
     (sender as Daemon).SendRequestAsync(RequestMethod.GET_CURRENCY_ID, new RequestParams { }, out JObject Result);
