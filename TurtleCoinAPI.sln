@@ -5,7 +5,7 @@ VisualStudioVersion = 15.0.27428.2037
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TurtleCoinAPI", "TurtleCoinAPI\TurtleCoinAPI.csproj", "{07F17AB9-EAF0-42D8-BD33-661E958FAFBB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Example", "Mobile Wallet Server\Example.csproj", "{472AF65E-6D23-4C61-BC89-CF6605381FC2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Example", "Example\Example.csproj", "{472AF65E-6D23-4C61-BC89-CF6605381FC2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
