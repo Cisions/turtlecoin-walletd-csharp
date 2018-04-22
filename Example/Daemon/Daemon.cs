@@ -297,6 +297,12 @@ namespace TurtleCoinAPI
 
                     // Get response
                     Result = JObject.Parse(reader.ReadToEnd());
+                    if (Result["result"] != null) Result = (JObject)Result["result"];
+                    else
+                    {
+                        Result = new JObject();
+                        ThrowError(ErrorCode.BAD_REQUEST);
+                    }
 
                     // Dispose of pieces
                     reader.Dispose();
