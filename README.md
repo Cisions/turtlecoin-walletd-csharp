@@ -44,7 +44,7 @@ public void OnDaemonUpdate(object sender, EventArgs e)
     // Daemon must read as ready to send requests
     if (!(sender as Daemon).Ready)
         Console.WriteLine("Daemon:\tSyncing - {0} / {1}",
-        (sender as Daemon).Height, (sender as Daemon).NetworkHeight);
+            (sender as Daemon).Height, (sender as Daemon).NetworkHeight);
 }
 ```
 
@@ -82,7 +82,7 @@ await _session.Daemon.BeginUpdateAsync();
             
 // Initialize wallet
 await _session.Wallet.InitializeAsync(_session.Daemon, "c:/turtlecoin/walletd.exe", 
-c:/turtlecoin/testwallet.wallet", "12345", 11911);
+    "c:/turtlecoin/testwallet.wallet", "12345", 11911);
 
 // Begin wallet update loop
 await _session.Wallet.BeginUpdateAsync();
@@ -94,9 +94,9 @@ public void OnWalletUpdate(object sender, EventArgs e)
 {
     if (!(sender as Wallet).Synced)
         Console.WriteLine("Wallet:\tSyncing - {0} / {1}",
-        (sender as Wallet).BlockCount, (sender as Wallet).KnownBlockCount);
+            (sender as Wallet).BlockCount, (sender as Wallet).KnownBlockCount);
     else
         Console.WriteLine("Available Balance: {0}, Locked Amount: {1}",
-        (sender as Wallet).AvailableBalance, (sender as Wallet).LockedAmount);
+            (sender as Wallet).AvailableBalance, (sender as Wallet).LockedAmount);
 }
 ```
