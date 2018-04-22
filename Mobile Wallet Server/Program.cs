@@ -3,7 +3,7 @@ using System;
 using System.Threading.Tasks;
 using TurtleCoinAPI;
 
-namespace Mobile_Wallet_Server
+namespace API_Example
 {
     class Program
     {
