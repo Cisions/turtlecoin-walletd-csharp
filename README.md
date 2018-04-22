@@ -1,4 +1,4 @@
-# TurtleCoinAPI
+# TurtleCoin.Net API
 
 An asynchronous wrapper API for loading and accessing the TurtleCoin daemon and wallet applications. Built to ease the creation of wallets and applications that want to pull data from the network.
 
@@ -39,6 +39,6 @@ public void OnDaemonReady(object sender, EventArgs e)
         new RequestParams { ["height"] = 12345 }, out JObject Result);
     
     // Output response to console
-    Console.WriteLine("Currency ID: {0}", (string)Result["currency_id_blob"]);
+    Console.WriteLine("Block Hash: {0}", (string)Result["hash"]);
 }
 ```
