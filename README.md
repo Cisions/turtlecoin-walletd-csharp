@@ -1,4 +1,4 @@
-# TurtleCoinAPI
+# TurtleCoin.Net API
 
 An asynchronous wrapper API for loading and accessing the TurtleCoin daemon and wallet applications. Built to ease the creation of wallets and applications that want to pull data from the network.
 
