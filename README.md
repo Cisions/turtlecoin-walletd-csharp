@@ -13,20 +13,31 @@ TurtleCoin _session = new TurtleCoin();
 From here you can create a daemon connection
 
 ```C#
-_session.Daemon.RefreshRate = 30000; // How often the daemon should update its info in milliseconds
-_session.Daemon.Log += DaemonLog; // Assign event handlers you want to use
+// How often the daemon should update its info in milliseconds
+_session.Daemon.RefreshRate = 30000;
+
+// Assign event handlers you want to use
+_session.Daemon.Log += DaemonLog;
 _session.Daemon.Error += DaemonError;
 _session.Daemon.OnReady += OnDaemonReady;
-await _session.Daemon.Initialize("Local path, host address, or IP", Port); // Initialize the daemon connection, port defaults to 11898 if not defined
-await _session.Daemon.BeginUpdateAsync(); // Begin the internal update loop
+
+// Initialize the daemon connection, port defaults to 11898 if not defined
+await _session.Daemon.Initialize("Local path, host address, or IP", Port);
+
+// Begin the internal update loop
+await _session.Daemon.BeginUpdateAsync();
 ```
 
 After a connection is established and the update loop is begun, you can do your processing and requests
 
 ```C#
-public void OnDaemonReady(object sender, EventArgs e) // Triggers when daemon is ready to accept requests
+// Triggers when daemon is ready to accept requests
+public void OnDaemonReady(object sender, EventArgs e)
 {
+    // Send a request to the daemon
     (sender as Daemon).SendRequestAsync(RequestMethod.GET_CURRENCY_ID, new RequestParams { }, out JObject Result);
+    
+    // Output response to console
     Console.WriteLine("Currency ID: {0}", (string)Result["currency_id_blob"]);
 }
 ```
