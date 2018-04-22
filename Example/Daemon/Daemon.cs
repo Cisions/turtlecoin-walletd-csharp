@@ -283,6 +283,7 @@ namespace TurtleCoinAPI
                     JRequest.Add(new JProperty("id", "0"));
                     JRequest.Add(new JProperty("method", Method.ToString()));
                     String Request = JRequest.ToString();
+                    Console.WriteLine("Request: " + Request);
 
                     // Send bytes to server
                     byte[] ByteArray = Encoding.UTF8.GetBytes(Request);
@@ -296,6 +297,7 @@ namespace TurtleCoinAPI
                     StreamReader reader = new StreamReader(WebResponse.GetResponseStream(), Encoding.UTF8);
 
                     // Get response
+                    Console.WriteLine("Response: " + reader.ReadToEnd());
                     Result = JObject.Parse(reader.ReadToEnd());
                     if (Result["result"] != null) Result = (JObject)Result["result"];
                     else

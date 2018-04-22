@@ -28,8 +28,8 @@ namespace API_Example
 
         public void OnDaemonReady(object sender, EventArgs e)
         {
-            (sender as Daemon).SendRequestAsync(RequestMethod.GET_CURRENCY_ID, new RequestParams { }, out JObject Result);
-            Console.WriteLine("Result: {0}", Result.ToString());
+            (sender as Daemon).SendRequestAsync(RequestMethod.GET_BLOCK_HEADER_BY_HEIGHT, new RequestParams { ["height"] = 12345 }, out JObject Result);
+            Console.WriteLine("Block Hash: {0}", (string)Result["hash"]);
         }
 
         public void OnDaemonUpdate(object sender, EventArgs e)
