@@ -39,6 +39,6 @@ public void OnDaemonReady(object sender, EventArgs e)
         new RequestParams { ["height"] = 12345 }, out JObject Result);
     
     // Output response to console
-    Console.WriteLine("Currency ID: {0}", (string)Result["currency_id_blob"]);
+    Console.WriteLine("Block Hash: {0}", (string)Result["hash"]);
 }
 ```
