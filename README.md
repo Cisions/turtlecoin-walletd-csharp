@@ -35,7 +35,8 @@ After a connection is established and the update loop is begun, you can do your 
 public void OnDaemonReady(object sender, EventArgs e)
 {
     // Send a request to the daemon
-    (sender as Daemon).SendRequestAsync(RequestMethod.GET_CURRENCY_ID, new RequestParams { }, out JObject Result);
+    (sender as Daemon).SendRequestAsync(RequestMethod.GET_BLOCK_HEADER_BY_HEIGHT,
+        new RequestParams { ["height"] = 12345 }, out JObject Result);
     
     // Output response to console
     Console.WriteLine("Currency ID: {0}", (string)Result["currency_id_blob"]);
