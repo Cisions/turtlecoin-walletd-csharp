@@ -1,4 +1,7 @@
-﻿namespace TurtleCoinAPI
+﻿using System;
+using System.Threading.Tasks;
+
+namespace TurtleCoinAPI
 {
     public partial class TurtleCoin
     {
@@ -12,11 +15,14 @@
             Mobile = new Mobile();
         }
 
-        public void Exit()
+        /// <summary>
+        /// Cleans up and exits from the session, saving daemon and wallet progress
+        /// </summary>
+        public async Task Exit(bool ForceExit = false)
         {
-            Mobile.Exit(true);
-            Wallet.Exit(true);
-            Daemon.Exit(true);
+            await Mobile.Exit(ForceExit);
+            await Wallet.Exit(ForceExit);
+            await Daemon.Exit(ForceExit);
         }
     }
 }

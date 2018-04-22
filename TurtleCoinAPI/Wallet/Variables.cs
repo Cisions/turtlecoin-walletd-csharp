@@ -18,7 +18,6 @@ namespace TurtleCoinAPI
         // Connection status
         public bool Connected { get; private set; }
         public bool Local { get; private set; }
-        public bool Ready { get; private set; }
 
         // Process to run local daemon on
         private Process
@@ -51,6 +50,8 @@ namespace TurtleCoinAPI
         public double BlockCount { get; private set; }
         public string LastBlockHash { get; private set; }
         public double KnownBlockCount { get; private set; }
+        public double AvailableBalance { get; private set; }
+        public double LockedAmount { get; private set; }
 
         // Internal variables
         private string InternalHash { get; set; }

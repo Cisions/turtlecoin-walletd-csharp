@@ -61,7 +61,7 @@ namespace TurtleCoinAPI
         /// <summary>
         /// Main listen loop
         /// </summary>
-        private async Task Listen()
+        private async void Listen()
         {
             // Run listen loop
             while (Listening)

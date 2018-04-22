@@ -128,13 +128,17 @@ namespace TurtleCoinAPI
         public Task Exit(bool ForceExit = false)
         {
             // Clean up
-            if (Local && !Process.HasExited)
-                using (StreamWriter StreamWriter = Process.StandardInput)
-                    StreamWriter.WriteLine("exit");
             Connected = false;
             Ready = false;
             Synced = false;
-            if (ForceExit) CancellationSource.Cancel();
+            CancellationSource.Cancel();
+            if (Local && !Process.HasExited)
+                using (StreamWriter StreamWriter = Process.StandardInput)
+                {
+                    LogLine("Saving");
+                    StreamWriter.WriteLine("exit");
+                    if (ForceExit) Process.Kill();
+                }
 
             // Completed
             return Task.CompletedTask;
@@ -146,7 +150,11 @@ namespace TurtleCoinAPI
         public Task BeginUpdateAsync()
         {
             // Begin updating
-            if (Connected) Update();
+            if (Connected)
+            {
+                LogLine("Update started");
+                Update();
+            }
             else ThrowError(ErrorCode.NOT_INITIALIZED);
 
             // Completed
@@ -156,7 +164,7 @@ namespace TurtleCoinAPI
         /// <summary>
         /// Main update loop
         /// </summary>
-        private async Task Update()
+        private async void Update()
         {
             // Loop as long as the daemon is connected
             while (Connected)
@@ -227,13 +235,7 @@ namespace TurtleCoinAPI
                         OnReady?.Invoke(this, EventArgs.Empty);
                     }
 
-                    // Update if daemon is accepting requests
-                    if (Ready)
-                    {
-
-                        // Update here
-
-                    }
+                    // Do updating
 
                     // Invoke update event
                     OnUpdate?.Invoke(this, EventArgs.Empty);
@@ -241,10 +243,7 @@ namespace TurtleCoinAPI
                     // Wait for specified amount of time
                     await Task.Delay(RefreshRate, CancellationSource.Token);
                 }
-                catch
-                {
-                    LogLine("Daemon update cancelled");
-                }
+                catch { }
             }
         }
 
@@ -283,7 +282,6 @@ namespace TurtleCoinAPI
                     JRequest.Add(new JProperty("id", "0"));
                     JRequest.Add(new JProperty("method", Method.ToString()));
                     String Request = JRequest.ToString();
-                    Console.WriteLine("Request: " + Request);
 
                     // Send bytes to server
                     byte[] ByteArray = Encoding.UTF8.GetBytes(Request);
@@ -297,7 +295,6 @@ namespace TurtleCoinAPI
                     StreamReader reader = new StreamReader(WebResponse.GetResponseStream(), Encoding.UTF8);
 
                     // Get response
-                    Console.WriteLine("Response: " + reader.ReadToEnd());
                     Result = JObject.Parse(reader.ReadToEnd());
                     if (Result["result"] != null) Result = (JObject)Result["result"];
                     else

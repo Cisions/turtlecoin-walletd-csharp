@@ -125,13 +125,16 @@ namespace TurtleCoinAPI
         public Task Exit(bool ForceExit = false)
         {
             // Clean up
+            Connected = false;
+            Synced = false;
+            CancellationSource.Cancel();
             if (Local && !Process.HasExited)
                 using (StreamWriter StreamWriter = Process.StandardInput)
+                {
+                    LogLine("Saving");
                     StreamWriter.WriteLine("exit");
-            Connected = false;
-            Ready = false;
-            Synced = false;
-            if (ForceExit) CancellationSource.Cancel();
+                    if (ForceExit) Process.Kill();
+                }
 
             // Completed
             return Task.CompletedTask;
@@ -143,7 +146,12 @@ namespace TurtleCoinAPI
         public Task BeginUpdateAsync()
         {
             // Begin updating
-            Update();
+            if (Connected)
+            {
+                LogLine("Update started");
+                Update();
+            }
+            else ThrowError(ErrorCode.NOT_INITIALIZED);
 
             // Completed
             return Task.CompletedTask;
@@ -152,7 +160,7 @@ namespace TurtleCoinAPI
         /// <summary>
         /// Main update loop
         /// </summary>
-        private async Task Update()
+        private async void Update()
         {
             // Loop as long as the wallet is connected
             while (Connected)
@@ -184,32 +192,27 @@ namespace TurtleCoinAPI
 
                     // Update status
                     await SendRequestAsync(RequestMethod.GET_STATUS, new RequestParams { }, out Result);
-                    
-                    // Populate network info
                     PeerCount = (double)Result["peerCount"];
                     BlockCount = (double)Result["blockCount"];
                     LastBlockHash = (string)Result["lastBlockHash"];
                     KnownBlockCount = (double)Result["knownBlockCount"];
-                    if (BlockCount >= KnownBlockCount)
-                        Synced = true;
-                    else Synced = false;
 
-                    // Check if daemon is ready
-                    if (!Ready && Synced)
+                    // Check if wallet is synced
+                    if (!Synced && Daemon.Synced && BlockCount >= Daemon.NetworkHeight - 1)
                     {
                         // Set ready status
-                        Ready = true;
+                        Synced = true;
 
                         // Trigger ready event handler
                         LogLine("Synced");
                         OnSynced?.Invoke(this, EventArgs.Empty);
                     }
-                    
-                    
+                    else Synced = false;
 
-                    // Update here
-
-
+                    // Update balance
+                    await SendRequestAsync(RequestMethod.GET_BALANCE, new RequestParams { }, out Result);
+                    AvailableBalance = (double)Result["availableBalance"] / 100;
+                    LockedAmount = (double)Result["lockedAmount"] / 100;
 
                     // Invoke update event
                     OnUpdate?.Invoke(this, EventArgs.Empty);
@@ -217,10 +220,7 @@ namespace TurtleCoinAPI
                     // Wait for specified amount of time
                     await Task.Delay(RefreshRate, CancellationSource.Token);
                 }
-                catch
-                {
-                    //LogLine("Wallet update cancelled");
-                }
+                catch { }
             }
         }
 

@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
 using System.Security.Cryptography;
@@ -163,8 +164,8 @@ namespace TurtleCoinAPI
     /// <summary>
     /// Request parameters
     /// </summary>
-    public class RequestParams : JObject
+    public class RequestParams : Dictionary<string, object>
     {
-        public RequestParams() { }
+        //public RequestParams() { }
     }
 }

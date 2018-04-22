@@ -1,6 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
-using System;
-using System.Threading.Tasks;
+﻿using System;
 using TurtleCoinAPI;
 
 namespace API_Example
@@ -9,57 +7,55 @@ namespace API_Example
     {
         public TurtleCoin _session;
 
+        // Print daemon log to console
         public void DaemonLog(object sender, LogEventArgs e)
         {
             Console.WriteLine("Daemon:\t{0}", e.Message);
         }
 
+        // Print wallet log to console
         public void WalletLog(object sender, LogEventArgs e)
         {
             Console.WriteLine("Wallet:\t{0}", e.Message);
         }
 
-        public void MobileLog(object sender, LogEventArgs e) { }
-
+        // Print errors to console
         public void Error(object sender, ErrorEventArgs e)
         {
             Console.WriteLine("Error:\t{0}", e.ErrorCode);
         }
 
-        public void OnDaemonReady(object sender, EventArgs e)
-        {
-            (sender as Daemon).SendRequestAsync(RequestMethod.GET_BLOCK_HEADER_BY_HEIGHT, new RequestParams { ["height"] = 12345 }, out JObject Result);
-            Console.WriteLine("Block Hash: {0}", (string)Result["hash"]);
-        }
-
+        // Daemon update event
         public void OnDaemonUpdate(object sender, EventArgs e)
         {
-            if (!_session.Daemon.Synced)
-                Console.WriteLine("Syncing - {0} / {1}", _session.Daemon.Height, _session.Daemon.NetworkHeight);
+            // Daemon must read as ready to send requests
+            if (!(sender as Daemon).Ready)
+                Console.WriteLine("Daemon:\tSyncing - {0} / {1}", (sender as Daemon).Height, (sender as Daemon).NetworkHeight);
         }
 
+        // Wallet update event
+        public void OnWalletUpdate(object sender, EventArgs e)
+        {
+            if (!(sender as Wallet).Synced)
+                Console.WriteLine("Wallet:\tSyncing - {0} / {1}", (sender as Wallet).BlockCount, (sender as Wallet).KnownBlockCount);
+            else
+                Console.WriteLine("Available Balance: {0}, Locked Amount: {1}", (sender as Wallet).AvailableBalance, (sender as Wallet).LockedAmount);
+        }
+
+        // Other events
         public void OnDaemonConnect(object sender, EventArgs e) { }
         public void OnDaemonDisconnect(object sender, EventArgs e) { }
-        public void OnWalletSynced(object sender, EventArgs e) { }
-        public void OnWalletUpdate(object sender, EventArgs e) { }
         public void OnWalletConnect(object sender, EventArgs e) { }
         public void OnWalletDisconnect(object sender, EventArgs e) { }
-        public void OnMobileRequest(object sender, EventArgs e) { }
+        public void OnDaemonReady(object sender, EventArgs e) { }
+        public void OnWalletSynced(object sender, EventArgs e) { }
 
         public static void Main(string[] args)
         {
-            // Run program
-            Program p = new Program();
-            p.Run();
-
-            // Await key press to close
-            Console.ReadKey();
-
-            // Clean up session
-            p._session.Exit();
+            new Program().Run();
         }
 
-        public async Task Run()
+        public async void Run()
         {
             // Create a new session
             _session = new TurtleCoin();
@@ -82,11 +78,6 @@ namespace API_Example
             _session.Wallet.OnUpdate += OnWalletUpdate;
             _session.Wallet.OnDisconnect += OnWalletDisconnect;
 
-            // Assign mobile event handlers
-            _session.Mobile.Log += MobileLog;
-            _session.Mobile.Error += Error;
-            _session.Mobile.OnRequestReceived += OnMobileRequest;
-
             // Initialize daemon
             await _session.Daemon.InitializeAsync("c:/turtlecoin/turtlecoind.exe", 11898);
 
@@ -99,16 +90,15 @@ namespace API_Example
             // Begin wallet update loop
             await _session.Wallet.BeginUpdateAsync();
 
-            /*
-            // Initialize mobile
-            await _session.Mobile.InitializeAsync(_session.Wallet, 19991);
+            // Await input to exit session
+            Console.ReadLine();
 
-            // Begin mobile listening
-            await _session.Mobile.BeginUpdateAsync();
-            */
+            // Clean up session, force an exit
+            await _session.Exit(true);
 
-            // Delay infinitely to stay alive
-            await Task.Delay(-1);
+            // Await key press to close
+            Console.WriteLine("Press any key to close");
+            Console.ReadKey();
         }
     }
 }
