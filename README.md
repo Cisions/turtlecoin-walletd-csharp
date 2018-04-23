@@ -13,32 +13,90 @@ TurtleCoin _session = new TurtleCoin();
 From here you can create a daemon connection
 
 ```C#
-// How often the daemon should update its info in milliseconds
-_session.Daemon.RefreshRate = 30000;
+// Create a new session
+_session = new TurtleCoin();
 
-// Assign event handlers you want to use
+// Set how often the network information should be updated (in milliseconds)
+_session.Daemon.RefreshRate = 5000;
+
+// Assign daemon event handlers
 _session.Daemon.Log += DaemonLog;
-_session.Daemon.Error += DaemonError;
+_session.Daemon.Error += Error;
+_session.Daemon.OnConnect += OnDaemonConnect;
 _session.Daemon.OnReady += OnDaemonReady;
+_session.Daemon.OnUpdate += OnDaemonUpdate;
+_session.Daemon.OnDisconnect += OnDaemonDisconnect;
 
-// Initialize the daemon connection, port defaults to 11898 if not defined
+// Initialize daemon, port defaults to 11898 if not defined
 await _session.Daemon.Initialize("Local path, host address, or IP", Port);
 
-// Begin the internal update loop
+// Begin daemon update loop
 await _session.Daemon.BeginUpdateAsync();
 ```
 
-After a connection is established and the update loop is begun, you can do your processing and requests
+After a connection is established and the update loop has begun, you can do your processing and requests
 
 ```C#
-// Triggers when daemon is ready to accept requests
-public void OnDaemonReady(object sender, EventArgs e)
+// Triggers when daemon information is updated
+// Daemon update event
+public void OnDaemonUpdate(object sender, EventArgs e)
 {
-    // Send a request to the daemon
-    (sender as Daemon).SendRequestAsync(RequestMethod.GET_BLOCK_HEADER_BY_HEIGHT,
-        new RequestParams { ["height"] = 12345 }, out JObject Result);
-    
-    // Output response to console
-    Console.WriteLine("Block Hash: {0}", (string)Result["hash"]);
+    // Daemon must read as ready to send requests
+    if (!(sender as Daemon).Ready)
+        Console.WriteLine("Daemon:\tSyncing - {0} / {1}",
+            (sender as Daemon).Height, (sender as Daemon).NetworkHeight);
+}
+```
+
+Opening a wallet is similar, but requires an existing daemon connection
+
+```C#
+// Create a new session
+_session = new TurtleCoin();
+
+// Set refresh rates
+_session.Daemon.RefreshRate = 5000;
+_session.Wallet.RefreshRate = 5000;
+
+// Assign daemon event handlers
+_session.Daemon.Log += DaemonLog;
+_session.Daemon.Error += Error;
+_session.Daemon.OnConnect += OnDaemonConnect;
+_session.Daemon.OnReady += OnDaemonReady;
+_session.Daemon.OnUpdate += OnDaemonUpdate;
+_session.Daemon.OnDisconnect += OnDaemonDisconnect;
+
+// Assign wallet event handlers
+_session.Wallet.Log += WalletLog;
+_session.Wallet.Error += Error;
+_session.Wallet.OnConnect += OnWalletConnect;
+_session.Wallet.OnSynced += OnWalletSynced;
+_session.Wallet.OnUpdate += OnWalletUpdate;
+_session.Wallet.OnDisconnect += OnWalletDisconnect;
+
+// Initialize daemon
+await _session.Daemon.InitializeAsync("c:/turtlecoin/turtlecoind.exe", 11898);
+
+// Begin daemon update loop
+await _session.Daemon.BeginUpdateAsync();
+            
+// Initialize wallet
+await _session.Wallet.InitializeAsync(_session.Daemon, "c:/turtlecoin/walletd.exe", 
+    "c:/turtlecoin/testwallet.wallet", "12345", 11911);
+
+// Begin wallet update loop
+await _session.Wallet.BeginUpdateAsync();
+```
+
+```C#
+// Wallet update event
+public void OnWalletUpdate(object sender, EventArgs e)
+{
+    if (!(sender as Wallet).Synced)
+        Console.WriteLine("Wallet:\tSyncing - {0} / {1}",
+            (sender as Wallet).BlockCount, (sender as Wallet).KnownBlockCount);
+    else
+        Console.WriteLine("Available Balance: {0}, Locked Amount: {1}",
+            (sender as Wallet).AvailableBalance, (sender as Wallet).LockedAmount);
 }
 ```
