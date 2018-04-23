@@ -1,26 +1,38 @@
 ﻿using System;
+using System.IO;
 using TurtleCoinAPI;
 
 namespace API_Example
 {
+    /*
+     * This is an example program that will create an API session, open a daemon connection,
+     * load a wallet using that connection, sync both, and then display the wallet's total balances
+     */
     class Program
     {
+        // Declare an API session
         public TurtleCoin _session;
 
         // Print daemon log to console
-        public void DaemonLog(object sender, LogEventArgs e)
+        public void DaemonLog(object sender, TurtleCoinLogEventArgs e)
         {
             Console.WriteLine("Daemon:\t{0}", e.Message);
         }
 
         // Print wallet log to console
-        public void WalletLog(object sender, LogEventArgs e)
+        public void WalletLog(object sender, TurtleCoinLogEventArgs e)
         {
             Console.WriteLine("Wallet:\t{0}", e.Message);
         }
 
+        // Print web server log to console
+        public void WebServerLog(object sender, TurtleCoinLogEventArgs e)
+        {
+            Console.WriteLine("Web:\t{0}", e.Message);
+        }
+
         // Print errors to console
-        public void Error(object sender, ErrorEventArgs e)
+        public void Error(object sender, TurtleCoinErrorEventArgs e)
         {
             Console.WriteLine("Error:\t{0}", e.ErrorCode);
         }
@@ -28,8 +40,8 @@ namespace API_Example
         // Daemon update event
         public void OnDaemonUpdate(object sender, EventArgs e)
         {
-            // Daemon must read as ready to send requests
-            if (!(sender as Daemon).Ready)
+            // Daemon must read as synced to send requests
+            if (!(sender as Daemon).Synced)
                 Console.WriteLine("Daemon:\tSyncing - {0} / {1}", (sender as Daemon).Height, (sender as Daemon).NetworkHeight);
         }
 
@@ -47,7 +59,7 @@ namespace API_Example
         public void OnDaemonDisconnect(object sender, EventArgs e) { }
         public void OnWalletConnect(object sender, EventArgs e) { }
         public void OnWalletDisconnect(object sender, EventArgs e) { }
-        public void OnDaemonReady(object sender, EventArgs e) { }
+        public void OnDaemonSynced(object sender, EventArgs e) { }
         public void OnWalletSynced(object sender, EventArgs e) { }
 
         public static void Main(string[] args)
@@ -66,7 +78,7 @@ namespace API_Example
             _session.Daemon.Log += DaemonLog;
             _session.Daemon.Error += Error;
             _session.Daemon.OnConnect += OnDaemonConnect;
-            _session.Daemon.OnReady += OnDaemonReady;
+            _session.Daemon.OnSynced += OnDaemonSynced;
             _session.Daemon.OnUpdate += OnDaemonUpdate;
             _session.Daemon.OnDisconnect += OnDaemonDisconnect;
 
@@ -77,6 +89,10 @@ namespace API_Example
             _session.Wallet.OnSynced += OnWalletSynced;
             _session.Wallet.OnUpdate += OnWalletUpdate;
             _session.Wallet.OnDisconnect += OnWalletDisconnect;
+
+            // Assign web server event handlers
+            _session.WebServer.Log += WebServerLog;
+            _session.WebServer.Error += Error;
 
             // Initialize daemon
             await _session.Daemon.InitializeAsync("c:/turtlecoin/turtlecoind.exe", 11898);
@@ -89,6 +105,17 @@ namespace API_Example
 
             // Begin wallet update loop
             await _session.Wallet.BeginUpdateAsync();
+
+            // Create a web server
+            await _session.WebServer.InitializeAsync(_session.Wallet, 8080);
+
+            // Add endpoints
+            string[] Files = Directory.GetFiles("WebServer", "*.*", SearchOption.AllDirectories);
+            foreach (string File in Files)
+                await _session.WebServer.Add(new Endpoint(File.Replace("WebServer\\", ""), File));
+
+            // Start web server
+            await _session.WebServer.BeginUpdateAsync();
 
             // Await input to exit session
             Console.ReadLine();

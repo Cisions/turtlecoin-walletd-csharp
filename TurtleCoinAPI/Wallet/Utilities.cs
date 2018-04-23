@@ -16,7 +16,7 @@ namespace TurtleCoinAPI
         /// <returns></returns>
         private void ThrowError(ErrorCode e)
         {
-            Error?.Invoke(this, new ErrorEventArgs { Time = DateTime.Now, ErrorCode = e });
+            Error?.Invoke(this, new TurtleCoinErrorEventArgs { Time = DateTime.Now, ErrorCode = e });
         }
 
         /// <summary>
@@ -25,7 +25,7 @@ namespace TurtleCoinAPI
         /// <param name="Input">String to log</param>
         private void LogLine(string Input, params object[] args)
         {
-            Log?.Invoke(this, new LogEventArgs { Time = DateTime.Now, Message = String.Format(Input, args) });
+            Log?.Invoke(this, new TurtleCoinLogEventArgs { Time = DateTime.Now, Message = String.Format(Input, args) });
         }
 
         /// <summary>

@@ -51,9 +51,9 @@
     <Compile Include="Daemon\Daemon.cs" />
     <Compile Include="Daemon\Utilities.cs" />
     <Compile Include="Daemon\Variables.cs" />
-    <Compile Include="Mobile\Mobile.cs" />
-    <Compile Include="Mobile\Utilities.cs" />
-    <Compile Include="Mobile\Variables.cs" />
+    <Compile Include="Web\WebServer.cs" />
+    <Compile Include="Web\Utilities.cs" />
+    <Compile Include="Web\Variables.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TurtleCoin.cs" />

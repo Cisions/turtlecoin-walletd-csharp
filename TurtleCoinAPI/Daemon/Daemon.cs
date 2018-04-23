@@ -129,16 +129,20 @@ namespace TurtleCoinAPI
         {
             // Clean up
             Connected = false;
-            Ready = false;
             Synced = false;
             CancellationSource.Cancel();
-            if (Local && !Process.HasExited)
-                using (StreamWriter StreamWriter = Process.StandardInput)
-                {
-                    LogLine("Saving");
-                    StreamWriter.WriteLine("exit");
-                    if (ForceExit) Process.Kill();
-                }
+            try
+            {
+                if (Local && !Process.HasExited)
+                    using (StreamWriter StreamWriter = Process.StandardInput)
+                    {
+                        LogLine("Saving");
+                        StreamWriter.WriteLine("exit");
+                        if (ForceExit)
+                            Process.Kill();
+                    }
+            }
+            catch { }
 
             // Completed
             return Task.CompletedTask;
@@ -195,7 +199,7 @@ namespace TurtleCoinAPI
                     JObject Result = new JObject();
 
                     // Update status
-                    await SendRequestAsync(RequestMethod.GET_INFO, new RequestParams { }, out Result);
+                    await SendRequestAsync(RequestMethod.GET_INFO, new JObject { }, out Result);
 
                     // Make sure daemon is correct version
                     if (Result["synced"] == null)
@@ -219,21 +223,21 @@ namespace TurtleCoinAPI
                     NetworkHeight = (double)Result["network_height"];
                     OutgoingConnectionsCount = (double)Result["outgoing_connections_count"];
                     Status = (string)Result["status"];
-                    Synced = (bool)Result["synced"];
                     TransactionCount = (double)Result["tx_count"];
                     TransactionPoolSize = (double)Result["tx_pool_size"];
                     WhitePeerlistSize = (double)Result["white_peerlist_size"];
 
                     // Check if daemon is ready
-                    if (!Ready && (bool)Result["synced"] == true)
+                    if (!Synced && (bool)Result["synced"] == true)
                     {
                         // Set ready status
-                        Ready = true;
+                        Synced = true;
 
                         // Trigger ready event handler
-                        LogLine("Ready");
-                        OnReady?.Invoke(this, EventArgs.Empty);
+                        LogLine("Synced");
+                        OnSynced?.Invoke(this, EventArgs.Empty);
                     }
+                    else Synced = false;
 
                     // Do updating
 
@@ -243,7 +247,10 @@ namespace TurtleCoinAPI
                     // Wait for specified amount of time
                     await Task.Delay(RefreshRate, CancellationSource.Token);
                 }
-                catch { }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                }
             }
         }
 
@@ -252,7 +259,7 @@ namespace TurtleCoinAPI
         /// </summary>
         /// <param name="Method">The method the request is using</param>
         /// <param name="Params">The parameters to pass in the request</param>
-        public Task SendRequestAsync(RequestMethod Method, RequestParams Params, out JObject Result)
+        public Task SendRequestAsync(RequestMethod Method, JObject Params, out JObject Result)
         {
             try
             {
@@ -297,11 +304,7 @@ namespace TurtleCoinAPI
                     // Get response
                     Result = JObject.Parse(reader.ReadToEnd());
                     if (Result["result"] != null) Result = (JObject)Result["result"];
-                    else
-                    {
-                        Result = new JObject();
-                        ThrowError(ErrorCode.BAD_REQUEST);
-                    }
+                    else ThrowError(ErrorCode.BAD_REQUEST);
 
                     // Dispose of pieces
                     reader.Dispose();
@@ -311,7 +314,7 @@ namespace TurtleCoinAPI
             catch
             {
                 Result = new JObject();
-                if (Ready) ThrowError(ErrorCode.BAD_REQUEST);
+                if (Synced) ThrowError(ErrorCode.BAD_REQUEST);
             }
 
             // Completed

@@ -24,8 +24,8 @@ namespace TurtleCoinAPI
             Process = new Process();
 
         // Event handlers
-        public EventHandler<LogEventArgs> Log;
-        public EventHandler<ErrorEventArgs> Error;
+        public EventHandler<TurtleCoinLogEventArgs> Log;
+        public EventHandler<TurtleCoinErrorEventArgs> Error;
         public EventHandler
             OnConnect,
             OnDisconnect,

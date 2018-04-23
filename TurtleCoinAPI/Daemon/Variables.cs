@@ -17,20 +17,19 @@ namespace TurtleCoinAPI
         // Connection status
         public bool Connected { get; private set; }
         public bool Local { get; private set; }
-        public bool Ready { get; private set; }
 
         // Process to run local daemon on
         private Process
             Process = new Process();
 
         // Event handlers
-        public EventHandler<LogEventArgs> Log;
-        public EventHandler<ErrorEventArgs> Error;
+        public EventHandler<TurtleCoinLogEventArgs> Log;
+        public EventHandler<TurtleCoinErrorEventArgs> Error;
         public EventHandler
             OnConnect,
             OnDisconnect,
             OnUpdate,
-            OnReady;
+            OnSynced;
 
         // For canceling async loops
         private CancellationTokenSource

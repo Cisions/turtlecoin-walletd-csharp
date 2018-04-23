@@ -75,17 +75,17 @@ namespace TurtleCoinAPI
     /// <summary>
     /// Error event arguments
     /// </summary>
-    public class ErrorEventArgs : EventArgs
+    public class TurtleCoinErrorEventArgs : EventArgs
     {
         public DateTime Time { get; set; }
         public ErrorCode ErrorCode { get; set; }
-        public ErrorEventArgs() { }
+        public TurtleCoinErrorEventArgs() { }
     }
 
     /// <summary>
     /// Log event arguments
     /// </summary>
-    public class LogEventArgs : EventArgs
+    public class TurtleCoinLogEventArgs : EventArgs
     {
         public DateTime Time { get; set; }
         public string Message { get; set; }
@@ -151,7 +151,7 @@ namespace TurtleCoinAPI
 
         // Declarations
         private readonly string Method;
-        private RequestMethod(string Method)
+        public RequestMethod(string Method)
         {
             this.Method = Method;
         }
@@ -159,13 +159,5 @@ namespace TurtleCoinAPI
         {
             return Method;
         }
-    }
-
-    /// <summary>
-    /// Request parameters
-    /// </summary>
-    public class RequestParams : Dictionary<string, object>
-    {
-        //public RequestParams() { }
     }
 }

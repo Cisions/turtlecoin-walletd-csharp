@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace TurtleCoinAPI
 {
-    public partial class Mobile
+    public partial class Endpoint
     {
         /// <summary>
         /// Initializes a mobile listener

@@ -128,13 +128,18 @@ namespace TurtleCoinAPI
             Connected = false;
             Synced = false;
             CancellationSource.Cancel();
-            if (Local && !Process.HasExited)
-                using (StreamWriter StreamWriter = Process.StandardInput)
-                {
-                    LogLine("Saving");
-                    StreamWriter.WriteLine("exit");
-                    if (ForceExit) Process.Kill();
-                }
+            try
+            {
+                if (Local && !Process.HasExited)
+                    using (StreamWriter StreamWriter = Process.StandardInput)
+                    {
+                        LogLine("Saving");
+                        StreamWriter.WriteLine("exit");
+                        if (ForceExit)
+                            Process.Kill();
+                    }
+            }
+            catch { }
 
             // Completed
             return Task.CompletedTask;
@@ -191,14 +196,14 @@ namespace TurtleCoinAPI
                     JObject Result = new JObject();
 
                     // Update status
-                    await SendRequestAsync(RequestMethod.GET_STATUS, new RequestParams { }, out Result);
+                    await SendRequestAsync(RequestMethod.GET_STATUS, new JObject { }, out Result);
                     PeerCount = (double)Result["peerCount"];
                     BlockCount = (double)Result["blockCount"];
                     LastBlockHash = (string)Result["lastBlockHash"];
                     KnownBlockCount = (double)Result["knownBlockCount"];
 
                     // Check if wallet is synced
-                    if (!Synced && Daemon.Synced && BlockCount >= Daemon.NetworkHeight - 1)
+                    if (!Synced && Daemon.Synced && BlockCount >= Daemon.NetworkHeight - 2) // Fuzzy sync status
                     {
                         // Set ready status
                         Synced = true;
@@ -210,7 +215,7 @@ namespace TurtleCoinAPI
                     else Synced = false;
 
                     // Update balance
-                    await SendRequestAsync(RequestMethod.GET_BALANCE, new RequestParams { }, out Result);
+                    await SendRequestAsync(RequestMethod.GET_BALANCE, new JObject { }, out Result);
                     AvailableBalance = (double)Result["availableBalance"] / 100;
                     LockedAmount = (double)Result["lockedAmount"] / 100;
 
@@ -229,7 +234,7 @@ namespace TurtleCoinAPI
         /// </summary>
         /// <param name="Method">The method the request is using</param>
         /// <param name="Params">The parameters to pass in the request</param>
-        public Task SendRequestAsync(RequestMethod Method, RequestParams Params, out JObject Result)
+        public Task SendRequestAsync(RequestMethod Method, JObject Params, out JObject Result)
         {
             try
             {
@@ -261,11 +266,7 @@ namespace TurtleCoinAPI
                 // Get response
                 Result = JObject.Parse(reader.ReadToEnd());
                 if (Result["result"] != null) Result = (JObject)Result["result"];
-                else
-                {
-                    Result = new JObject();
-                    ThrowError(ErrorCode.BAD_REQUEST);
-                }
+                else ThrowError(ErrorCode.BAD_REQUEST);
 
                 // Dispose of pieces
                 reader.Dispose();

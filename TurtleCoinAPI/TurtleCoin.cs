@@ -12,7 +12,7 @@ namespace TurtleCoinAPI
         {
             Daemon = new Daemon();
             Wallet = new Wallet();
-            Mobile = new Mobile();
+            WebServer = new WebServer();
         }
 
         /// <summary>
@@ -20,7 +20,7 @@ namespace TurtleCoinAPI
         /// </summary>
         public async Task Exit(bool ForceExit = false)
         {
-            await Mobile.Exit(ForceExit);
+            await WebServer.Exit(ForceExit);
             await Wallet.Exit(ForceExit);
             await Daemon.Exit(ForceExit);
         }
