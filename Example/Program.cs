@@ -25,12 +25,6 @@ namespace API_Example
             Console.WriteLine("Wallet:\t{0}", e.Message);
         }
 
-        // Print web server log to console
-        public void WebServerLog(object sender, TurtleCoinLogEventArgs e)
-        {
-            Console.WriteLine("Web:\t{0}", e.Message);
-        }
-
         // Print errors to console
         public void Error(object sender, TurtleCoinErrorEventArgs e)
         {
@@ -90,10 +84,6 @@ namespace API_Example
             _session.Wallet.OnUpdate += OnWalletUpdate;
             _session.Wallet.OnDisconnect += OnWalletDisconnect;
 
-            // Assign web server event handlers
-            _session.WebServer.Log += WebServerLog;
-            _session.WebServer.Error += Error;
-
             // Initialize daemon
             await _session.Daemon.InitializeAsync("c:/turtlecoin/turtlecoind.exe", 11898);
 
@@ -105,17 +95,6 @@ namespace API_Example
 
             // Begin wallet update loop
             await _session.Wallet.BeginUpdateAsync();
-
-            // Create a web server
-            await _session.WebServer.InitializeAsync(_session.Wallet, 8080);
-
-            // Add endpoints
-            string[] Files = Directory.GetFiles("WebServer", "*.*", SearchOption.AllDirectories);
-            foreach (string File in Files)
-                await _session.WebServer.Add(new Endpoint(File.Replace("WebServer\\", ""), File));
-
-            // Start web server
-            await _session.WebServer.BeginUpdateAsync();
 
             // Await input to exit session
             Console.ReadLine();

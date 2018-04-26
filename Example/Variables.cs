@@ -8,6 +8,5 @@ namespace TurtleCoinAPI
         // Instances of other classes
         public Daemon Daemon;
         public Wallet Wallet;
-        public WebServer WebServer;
     }
 }
