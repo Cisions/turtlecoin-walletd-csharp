@@ -106,10 +106,13 @@ public void OnWalletUpdate(object sender, EventArgs e)
 Sending requests is also easy as pie
 
 ```C#
-await _session.Wallet.SendRequestAsync(RequestMethod.GET_BALANCE, new JObject {
-        ["address"] = "TurtleCoin address"
-    }, out JObject Result);
+if (_session.Wallet.Synced)
+{
+    await _session.Wallet.SendRequestAsync(RequestMethod.GET_BALANCE, new JObject {
+            ["address"] = "TurtleCoin address"
+        }, out JObject Result);
     
-Console.WriteLine("Available Balance: {0}, Locked Amount: {1}",
-    Result["availableBalance"], Result["lockedAmount"]);
+    Console.WriteLine("Available Balance: {0}, Locked Amount: {1}",
+        Result["availableBalance"], Result["lockedAmount"]);
+}
 ```
