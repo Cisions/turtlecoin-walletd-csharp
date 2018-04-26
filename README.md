@@ -109,6 +109,7 @@ Sending requests is also easy as pie
 await _session.Wallet.SendRequestAsync(RequestMethod.GET_BALANCE, new JObject {
         ["address"] = "TurtleCoin address"
     }, out JObject Result);
+    
 Console.WriteLine("Available Balance: {0}, Locked Amount: {1}",
     Result["availableBalance"], Result["lockedAmount"]);
 ```
