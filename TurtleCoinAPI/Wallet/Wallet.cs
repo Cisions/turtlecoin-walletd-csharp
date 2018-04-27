@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace TurtleCoinAPI
+namespace ShellWalletWeb
 {
     public partial class Wallet
     {
@@ -122,7 +122,7 @@ namespace TurtleCoinAPI
         /// <summary>
         /// Stops updating and cleans up
         /// </summary>
-        public Task Exit(bool ForceExit = false)
+        public async Task Exit(bool ForceExit = false)
         {
             // Clean up
             Connected = false;
@@ -131,18 +131,14 @@ namespace TurtleCoinAPI
             try
             {
                 if (Local && !Process.HasExited)
-                    using (StreamWriter StreamWriter = Process.StandardInput)
-                    {
-                        LogLine("Saving");
-                        StreamWriter.WriteLine("exit");
-                        if (ForceExit)
-                            Process.Kill();
-                    }
+                {
+                    await SendRequestAsync(RequestMethod.SAVE, new JObject(), out JObject Result);
+                    LogLine("Saved");
+                    if (ForceExit)
+                        Process.Kill();
+                }
             }
             catch { }
-
-            // Completed
-            return Task.CompletedTask;
         }
 
         /// <summary>
@@ -176,18 +172,18 @@ namespace TurtleCoinAPI
                     if (!Local && !TurtleCoin.Ping(Address, Port))
                     {
                         // Connection was lost
-                        await Exit();
                         ThrowError(ErrorCode.CONNECTION_LOST);
                         LogLine("Connection lost");
+                        await Exit();
                         OnDisconnect?.Invoke(this, EventArgs.Empty);
                         break;
                     }
                     else if (Local && Process.HasExited)
                     {
                         // Connection was lost
-                        await Exit();
                         ThrowError(ErrorCode.CONNECTION_LOST);
                         LogLine("Connection lost");
+                        await Exit();
                         OnDisconnect?.Invoke(this, EventArgs.Empty);
                         break;
                     }
@@ -214,10 +210,13 @@ namespace TurtleCoinAPI
                     }
                     else Synced = false;
 
-                    // Update balance
-                    await SendRequestAsync(RequestMethod.GET_BALANCE, new JObject { }, out Result);
-                    AvailableBalance = (double)Result["availableBalance"] / 100;
-                    LockedAmount = (double)Result["lockedAmount"] / 100;
+                    if (Synced)
+                    {
+                        // Update balance
+                        await SendRequestAsync(RequestMethod.GET_BALANCE, new JObject { ["address"] = "TRTLv2m2mSTBMfVSnhCtKwCkNxZGP8phCLwQhChHFnEzZc5SPYseqSBhEsjxHY8PDRQCTuPx4y9hVDU4wp4NjL3yZqLXipq59o1" }, out Result);
+                        AvailableBalance = (double)Result["availableBalance"] / 100;
+                        LockedAmount = (double)Result["lockedAmount"] / 100;
+                    }
 
                     // Invoke update event
                     OnUpdate?.Invoke(this, EventArgs.Empty);

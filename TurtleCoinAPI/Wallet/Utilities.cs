@@ -5,7 +5,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace TurtleCoinAPI
+namespace ShellWalletWeb
 {
     public partial class Wallet
     {
@@ -62,7 +62,7 @@ namespace TurtleCoinAPI
         /// </summary>
         /// <param name="Input">The string to be encrypted</param>
         /// <returns>Encrypted input string</returns>
-        private string EncryptString(string Input)
+        internal string EncryptString(string Input)
         {
             HashAlgorithm algorithm = new SHA256Managed();
             byte[] b = Encoding.ASCII.GetBytes(Input);
