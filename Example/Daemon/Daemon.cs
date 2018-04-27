@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace TurtleCoinAPI
+namespace ShellWalletWeb
 {
     public partial class Daemon
     {
@@ -89,8 +89,15 @@ namespace TurtleCoinAPI
                     Process.BeginOutputReadLine();
                     Process.BeginErrorReadLine();
 
+                    // Wait for daemon to be ready
+                    while (!Connected)
+                    {
+                        SendRequestAsync(RequestMethod.GET_INFO, new JObject(), out JObject Result);
+                        if (Result["height"] != null)
+                            Connected = true;
+                    }
+
                     // Trigger daemon connected event
-                    Connected = true;
                     OnConnect?.Invoke(this, EventArgs.Empty);
                 }
 
@@ -125,7 +132,7 @@ namespace TurtleCoinAPI
         /// <summary>
         /// Stops updating and cleans up
         /// </summary>
-        public Task Exit(bool ForceExit = false)
+        public async Task Exit(bool ForceExit = false)
         {
             // Clean up
             Connected = false;
@@ -134,18 +141,17 @@ namespace TurtleCoinAPI
             try
             {
                 if (Local && !Process.HasExited)
+                {
                     using (StreamWriter StreamWriter = Process.StandardInput)
                     {
-                        LogLine("Saving");
-                        StreamWriter.WriteLine("exit");
-                        if (ForceExit)
-                            Process.Kill();
+                        await StreamWriter.WriteLineAsync("exit");
+                        LogLine("Saved");
                     }
+                    if (ForceExit)
+                        Process.Kill();
+                }
             }
             catch { }
-
-            // Completed
-            return Task.CompletedTask;
         }
 
         /// <summary>
@@ -179,18 +185,18 @@ namespace TurtleCoinAPI
                     if (!Local && !TurtleCoin.Ping(Address, Port))
                     {
                         // Connection was lost
-                        await Exit();
                         ThrowError(ErrorCode.CONNECTION_LOST);
                         LogLine("Connection lost");
+                        await Exit();
                         OnDisconnect?.Invoke(this, EventArgs.Empty);
                         break;
                     }
                     else if (Local && Process.HasExited)
                     {
                         // Connection was lost
-                        await Exit();
                         ThrowError(ErrorCode.CONNECTION_LOST);
                         LogLine("Connection lost");
+                        await Exit();
                         OnDisconnect?.Invoke(this, EventArgs.Empty);
                         break;
                     }
@@ -205,9 +211,9 @@ namespace TurtleCoinAPI
                     if (Result["synced"] == null)
                     {
                         // Incorrect daemon version
-                        await Exit();
                         ThrowError(ErrorCode.INCORRECT_DAEMON_VERSION);
                         LogLine("Daemon is wrong version, use a newer version");
+                        await Exit();
                         OnDisconnect?.Invoke(this, EventArgs.Empty);
                         break;
                     }
@@ -328,6 +334,10 @@ namespace TurtleCoinAPI
         {
             // Return if data received if empty
             if (String.IsNullOrEmpty(e.Data)) return;
+
+            // Check if daemon reports as syncing
+            if (e.Data.Contains("Your TurtleCoin node is syncing with the network.") && !Connected)
+                Connected = true;
 
             // Add data to internal log
             DaemonOutput += e.Data;
