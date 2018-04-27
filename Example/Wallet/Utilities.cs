@@ -5,7 +5,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace TurtleCoinAPI
+namespace ShellWalletWeb
 {
     public partial class Wallet
     {
