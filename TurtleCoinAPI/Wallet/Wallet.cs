@@ -213,7 +213,7 @@ namespace ShellWalletWeb
                     if (Synced)
                     {
                         // Update balance
-                        await SendRequestAsync(RequestMethod.GET_BALANCE, new JObject { ["address"] = "TRTLv2m2mSTBMfVSnhCtKwCkNxZGP8phCLwQhChHFnEzZc5SPYseqSBhEsjxHY8PDRQCTuPx4y9hVDU4wp4NjL3yZqLXipq59o1" }, out Result);
+                        await SendRequestAsync(RequestMethod.GET_BALANCE, new JObject { }, out Result);
                         AvailableBalance = (double)Result["availableBalance"] / 100;
                         LockedAmount = (double)Result["lockedAmount"] / 100;
                     }
