@@ -5,7 +5,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ShellWalletWeb
+namespace TurtleCoinAPI
 {
     public partial class Daemon
     {

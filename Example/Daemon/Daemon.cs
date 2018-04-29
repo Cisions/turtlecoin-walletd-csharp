@@ -89,8 +89,15 @@ namespace TurtleCoinAPI
                     Process.BeginOutputReadLine();
                     Process.BeginErrorReadLine();
 
+                    // Wait for a connection
+                    while (!Connected)
+                    {
+                        SendRequestAsync(RequestMethod.GET_INFO, new JObject(), out JObject Result);
+                        if (Result["height"] != null)
+                            Connected = true;
+                    }
+
                     // Trigger daemon connected event
-                    Connected = true;
                     OnConnect?.Invoke(this, EventArgs.Empty);
                 }
 

@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.Threading;
 
-namespace ShellWalletWeb
+namespace TurtleCoinAPI
 {
     public partial class Daemon
     {
