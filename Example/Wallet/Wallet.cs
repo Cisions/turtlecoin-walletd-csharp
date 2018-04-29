@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ShellWalletWeb
+namespace TurtleCoinAPI
 {
     public partial class Wallet
     {
@@ -120,6 +120,111 @@ namespace ShellWalletWeb
         }
 
         /// <summary>
+        /// Initializes a daemon connection
+        /// </summary>
+        /// <param name="Path">Path to daemon (local path or node address)</param>
+        /// <param name="Port">Port daemon will connect through</param>
+        public Task CreateOrInitializeAsync(Daemon Daemon, string Path, string File, string Password, int Port = 8070)
+        {
+            // Set local variables
+            this.Daemon = Daemon;
+            this.Path = Path;
+            this.File = File;
+            this.Password = Password;
+            this.Port = Port;
+
+            LogLine("Initializing");
+
+            // Ensure daemon is connected
+            if (Daemon.Connected)
+                Connected = true;
+            else
+            {
+                LogLine("Daemon not connected");
+                ThrowError(ErrorCode.DAEMON_NOT_CONNECTED);
+                return Task.CompletedTask;
+            }
+
+            // Check if given path is local or remote
+            string ConvertedPath;
+            try
+            {
+                // If path starts with http, it is external
+                if (Path.StartsWith("http"))
+                {
+                    ConvertedPath = Path.Replace("http:", "").Replace("\\", "").Replace("/", "");
+                    Local = false;
+                }
+                else
+                {
+                    ConvertedPath = Path;
+                    if (IPAddress.TryParse(Path, out IPAddress i)) Local = false;
+                    else Local = new Uri(Path).IsFile;
+                }
+            }
+            catch
+            {
+                ThrowError(ErrorCode.INVALID_PATH);
+                return Task.CompletedTask;
+            }
+
+            // If path is local
+            if (Local)
+            {
+                // Set address
+                Address = "localhost";
+                LogLine("Set address to {0}", Address);
+
+                // Check if port is already in use
+                if (TurtleCoin.Ping(Address, Port))
+                {
+                    ThrowError(ErrorCode.PORT_IN_USE);
+                    return Task.CompletedTask;
+                }
+
+                // Launch wallet locally
+                LogLine("Creating process");
+
+                // Create wallet process
+                Process = new Process();
+                Process.StartInfo.FileName = ConvertedPath;
+                Process.StartInfo.UseShellExecute = false;
+                Process.StartInfo.RedirectStandardInput = true;
+                Process.StartInfo.RedirectStandardOutput = true;
+                Process.StartInfo.RedirectStandardError = true;
+
+                // Assign event handlers
+                Process.OutputDataReceived += WalletOutputDataReceived;
+                Process.ErrorDataReceived += WalletErrorDataReceived;
+                Process.Exited += WalletExited;
+
+                // Create process arguments
+                Process.StartInfo.Arguments = string.Format("--daemon-address {0} --daemon-port {1} -w \"{2}\" -p \"{3}\" --bind-port {4} --rpc-password \"{5}\"",
+                    Daemon.Address, Daemon.Port, TurtleCoin.EncodeString(File), TurtleCoin.EncodeString(Password), Port, TurtleCoin.EncodeString(Hash));
+                if (!System.IO.File.Exists(ConvertedPath))
+                    Process.StartInfo.Arguments += " --generate-container";
+
+                // Start process
+                if (Process.Start())
+                {
+                    // Begin redirecting output
+                    Process.BeginOutputReadLine();
+                    Process.BeginErrorReadLine();
+
+                    // Trigger wallet connected event
+                    Connected = true;
+                    OnConnect?.Invoke(this, EventArgs.Empty);
+                }
+
+                // Process failed to start
+                else ThrowError(ErrorCode.PROCESS_NOT_CREATED);
+            }
+
+            // Completed
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
         /// Stops updating and cleans up
         /// </summary>
         public async Task Exit(bool ForceExit = false)
@@ -128,17 +233,12 @@ namespace ShellWalletWeb
             Connected = false;
             Synced = false;
             CancellationSource.Cancel();
-            try
+            if (Local && !Process.HasExited)
             {
-                if (Local && !Process.HasExited)
-                {
-                    await SendRequestAsync(RequestMethod.SAVE, new JObject(), out JObject Result);
-                    LogLine("Saved");
-                    if (ForceExit)
-                        Process.Kill();
-                }
+                LogLine("Saving");
+                await SendRequestAsync(RequestMethod.SAVE, new JObject { }, out JObject Result);
+                if (ForceExit) Process.Kill();
             }
-            catch { }
         }
 
         /// <summary>
@@ -172,18 +272,18 @@ namespace ShellWalletWeb
                     if (!Local && !TurtleCoin.Ping(Address, Port))
                     {
                         // Connection was lost
+                        await Exit();
                         ThrowError(ErrorCode.CONNECTION_LOST);
                         LogLine("Connection lost");
-                        await Exit();
                         OnDisconnect?.Invoke(this, EventArgs.Empty);
                         break;
                     }
                     else if (Local && Process.HasExited)
                     {
                         // Connection was lost
+                        await Exit();
                         ThrowError(ErrorCode.CONNECTION_LOST);
                         LogLine("Connection lost");
-                        await Exit();
                         OnDisconnect?.Invoke(this, EventArgs.Empty);
                         break;
                     }
@@ -210,13 +310,10 @@ namespace ShellWalletWeb
                     }
                     else Synced = false;
 
-                    if (Synced)
-                    {
-                        // Update balance
-                        await SendRequestAsync(RequestMethod.GET_BALANCE, new JObject { }, out Result);
-                        AvailableBalance = (double)Result["availableBalance"] / 100;
-                        LockedAmount = (double)Result["lockedAmount"] / 100;
-                    }
+                    // Update balance
+                    await SendRequestAsync(RequestMethod.GET_BALANCE, new JObject { }, out Result);
+                    AvailableBalance = (double)Result["availableBalance"] / 100;
+                    LockedAmount = (double)Result["lockedAmount"] / 100;
 
                     // Invoke update event
                     OnUpdate?.Invoke(this, EventArgs.Empty);
