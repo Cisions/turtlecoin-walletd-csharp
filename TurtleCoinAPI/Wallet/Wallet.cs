@@ -184,7 +184,7 @@ namespace TurtleCoinAPI
 
                 // Launch wallet locally
                 LogLine("Creating process");
-                
+
                 ProcessCreation:
                 // Create wallet process
                 Process = new Process();
@@ -208,8 +208,14 @@ namespace TurtleCoinAPI
                 // Start process
                 if (Process.Start())
                 {
+                    // A bit hacky but saves wallet and reopens the process if a wallet was created
                     if (Process.StartInfo.Arguments.Contains("--generate-container"))
+                    {
+                        Process.WaitForExit();
                         goto ProcessCreation;
+                    }
+
+                    // Opening pre-existing wallet
                     else
                     {
                         // Begin redirecting output
