@@ -37,21 +37,15 @@ namespace TurtleCoinAPI
             {
                 if (InternalHash == null)
                 {
-                    Regex r = new Regex("[^a-zA-Z0-9 -]");
-                    byte[] p = Encoding.UTF8.GetBytes(Environment.CurrentDirectory);
-                    byte[] k = new Rfc2898DeriveBytes(Environment.MachineName,
-                        Encoding.ASCII.GetBytes(DateTime.Now.ToString("yyyyMMddHHmmssffff"))).GetBytes(256 / 8);
-                    var s = new RijndaelManaged() { Mode = CipherMode.CBC, Padding = PaddingMode.Zeros };
-                    var e = s.CreateEncryptor(k, Encoding.ASCII.GetBytes("@1B2c3D4e5F6g7H8"));
-                    byte[] c;
-                    using (var memoryStream = new MemoryStream())
-                    using (var cryptoStream = new CryptoStream(memoryStream, e, CryptoStreamMode.Write))
+                    Random random = new Random(Guid.NewGuid().GetHashCode());
+                    const string pool = "abcdefghijklmnopqrstuvwxyz0123456789";
+                    var builder = new StringBuilder();
+                    for (var i = 0; i < 255; i++)
                     {
-                        cryptoStream.Write(p, 0, p.Length);
-                        cryptoStream.FlushFinalBlock();
-                        c = memoryStream.ToArray();
+                        var c = pool[random.Next(0, pool.Length)];
+                        builder.Append(c);
                     }
-                    InternalHash = Convert.ToBase64String(c);
+                    InternalHash = builder.ToString();
                 }
                 return InternalHash;
             }

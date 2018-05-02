@@ -90,6 +90,7 @@ namespace TurtleCoinAPI
                     Process.BeginErrorReadLine();
 
                     // Wait for a connection
+                    LogLine("Waiting for height data");
                     while (!Connected)
                     {
                         SendRequestAsync(RequestMethod.GET_INFO, new JObject(), out JObject Result);

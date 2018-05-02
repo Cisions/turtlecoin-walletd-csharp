@@ -184,7 +184,8 @@ namespace TurtleCoinAPI
 
                 // Launch wallet locally
                 LogLine("Creating process");
-
+                
+                ProcessCreation:
                 // Create wallet process
                 Process = new Process();
                 Process.StartInfo.FileName = ConvertedPath;
@@ -201,19 +202,24 @@ namespace TurtleCoinAPI
                 // Create process arguments
                 Process.StartInfo.Arguments = string.Format("--daemon-address {0} --daemon-port {1} -w \"{2}\" -p \"{3}\" --bind-port {4} --rpc-password \"{5}\"",
                     Daemon.Address, Daemon.Port, TurtleCoin.EncodeString(File), TurtleCoin.EncodeString(Password), Port, TurtleCoin.EncodeString(Hash));
-                if (!System.IO.File.Exists(ConvertedPath))
+                if (!System.IO.File.Exists(File))
                     Process.StartInfo.Arguments += " --generate-container";
 
                 // Start process
                 if (Process.Start())
                 {
-                    // Begin redirecting output
-                    Process.BeginOutputReadLine();
-                    Process.BeginErrorReadLine();
+                    if (Process.StartInfo.Arguments.Contains("--generate-container"))
+                        goto ProcessCreation;
+                    else
+                    {
+                        // Begin redirecting output
+                        Process.BeginOutputReadLine();
+                        Process.BeginErrorReadLine();
 
-                    // Trigger wallet connected event
-                    Connected = true;
-                    OnConnect?.Invoke(this, EventArgs.Empty);
+                        // Trigger wallet connected event
+                        Connected = true;
+                        OnConnect?.Invoke(this, EventArgs.Empty);
+                    }
                 }
 
                 // Process failed to start
